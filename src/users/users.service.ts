@@ -7,7 +7,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
 import { RolesService } from '../roles/roles.service';
 import { RoleType } from '../roles/role.enum';
-import { encrypt } from 'src/common/utils/encryption';
+import { decrypt, encrypt } from 'src/common/utils/encryption';
 import { generateGroupId } from 'src/common/utils/generateGroupId';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly rolesService: RolesService,
-  ) {}
+  ) { }
 
   async createUser(dto: CreateUserDto, createdBy: string): Promise<User> {
     const role = await this.rolesService.findByName(dto.role);
@@ -32,10 +32,10 @@ export class UsersService {
       gst_no: dto.gst_no,
       groupId: dto.groupId || generateGroupId(),
       createdBy,
-        otp: dto.otp,
-        otp_expiration: dto.otp_expiration,
-        otp_mode: dto.otp_mode,
-        otp_attempts: dto.otp_attempts,
+      otp: dto.otp || "",
+      otp_expiration: dto.otp_expiration || "",
+      otp_mode: dto.otp_mode || "SMS",
+      otp_attempts: dto.otp_attempts || "",
     });
 
     return user.save();
@@ -59,19 +59,29 @@ export class UsersService {
 
     const page = filterDto.page || 1;
     const limit = filterDto.limit || 10;
-    query.skip((page - 1) * limit).limit(limit);
+    query.skip((+page - 1) * +limit).limit(+limit);
 
-    return query.exec();
+    const data = await query.exec();
+    data.forEach(item => {
+      item.pan_card = decrypt(item.pan_card);
+      item.aadhar_card = decrypt(item.aadhar_card)
+    })
+    return data
   }
 
   async findById(id: string): Promise<User> {
-    const user = await this.userModel.findById(id);
+    const user = await this.userModel.findOne({ uid: id });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    const decryptedUser = {
+      ...user.toObject(),
+      pan_card: decrypt(user.pan_card),
+      aadhar_card: decrypt(user.aadhar_card),
+    };
+    return decryptedUser;
   }
 
   async updateUser(id: string, dto: UpdateUserDto, currentUser: User): Promise<User> {
-    const userDoc = await this.userModel.findById(id);
+    const userDoc = await this.userModel.findOne({ uid: id });
     if (!userDoc) throw new NotFoundException('User not found');
 
     if (dto.pan_card) dto.pan_card = encrypt(dto.pan_card);
@@ -108,5 +118,5 @@ export class UsersService {
     return this.userModel.find({ groupId: currentUser.groupId });
   }
 
-  
+
 }

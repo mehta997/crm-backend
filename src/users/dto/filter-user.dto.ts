@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNumberString, IsOptional, IsString } from 'class-validator';
 
 export class FilterUserDto {
     @ApiPropertyOptional()
@@ -34,19 +34,21 @@ export class FilterUserDto {
 
     @ApiPropertyOptional()
     @IsOptional()
-    page?: number;
+    @IsNumberString()
+    page?: string;
 
     @ApiPropertyOptional()
     @IsOptional()
-    limit?: number;
+    @IsNumberString()
+    limit?: string;
 
     @IsOptional()
-    @IsString()
+    @IsDateString()
     @ApiProperty({ required: false })
     fromDate?: string;
 
     @IsOptional()
-    @IsString()
+    @IsDateString()
     @ApiProperty({ required: false })
     toDate?: string;
 }

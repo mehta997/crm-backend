@@ -18,7 +18,7 @@ import { SuperAdminSeeder } from './seeders/seed';
     AuthModule,
     UsersModule,
     RolesModule,
-    // DocumentsModule,
+    DocumentsModule,
   ],
   providers: [FirebaseService, SuperAdminSeeder],
   exports: []

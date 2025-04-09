@@ -47,7 +47,7 @@ export class User {
   @Prop()
   otp_expiration?: Date;
 
-  @Prop({ enum: ['SMS', 'EMAIL', 'APP'], default: 'SMS' })
+  @Prop({ enum: ['SMS', 'EMAIL', 'APP'], default: 'SMS', type: 'String', required: false })
   otp_mode?: string;
 
   @Prop({ default: 0 })
@@ -64,6 +64,21 @@ export class User {
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Role' })
   role_id?: string;
+
+  @Prop([
+    {
+      fileId: { type: mongoose.Types.ObjectId, required: true },
+      type: { type: String, required: true }, // e.g., 'pan_card', 'aadhar_card'
+      filename: { type: String },
+      uploadDate: { type: Date, default: Date.now },
+    },
+  ])
+  documents: Array<{
+    fileId: mongoose.Types.ObjectId;
+    type: string;
+    filename?: string;
+    uploadDate?: Date;
+  }>;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

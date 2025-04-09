@@ -23,9 +23,9 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 @ApiTags('Users')
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @Roles(RoleType.SUPER_ADMIN, RoleType.ADMIN, RoleType.STAFF)
@@ -50,6 +50,13 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
+  
+  @Get('me')
+  @ApiOperation({ summary: 'Get logged-in user data' })
+  async getSelfData(@Req() req) {
+    return this.usersService.getSelfData(req.user);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   async findOne(@Param('id') id: string) {
@@ -60,15 +67,25 @@ export class UsersController {
   @Roles(RoleType.SUPER_ADMIN, RoleType.ADMIN, RoleType.STAFF)
   @ApiOperation({ summary: 'Update user by ID' })
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req) {
-    const updaterId = req.user?.uid;
-    return this.usersService.updateUser(id, updateUserDto, updaterId);
+    return this.usersService.updateUser(id, updateUserDto, req.user);
   }
 
   @Delete(':id')
   @Roles(RoleType.SUPER_ADMIN, RoleType.ADMIN)
   @ApiOperation({ summary: 'Delete user (Only Admins)' })
   async remove(@Param('id') id: string, @Req() req) {
-    const updaterId = req.user?.uid;
-    return this.usersService.deleteUser(id, updaterId);
+    return this.usersService.deleteUser(id, req.user);
+  }
+
+  @Get('group')
+  @ApiOperation({ summary: 'Get users from the same groupId' })
+  async findAllByGroup(@Req() req) {
+    return this.usersService.findAllByGroup(req.user);
+  }
+
+  @Get('phone/:phone')
+  @ApiOperation({ summary: 'Find user by phone number' })
+  async findByPhone(@Param('phone') phone: string) {
+    return this.usersService.findByPhone(phone);
   }
 }
